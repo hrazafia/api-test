@@ -1,0 +1,44 @@
+import jwt from 'jsonwebtoken';
+import { prisma } from '../config/db.config.js'
+
+async function authMiddleware(req, res, next)
+{
+	let token;
+	
+	if (req.headers.authorization && req.headers.authorization.startsWith("Bearer"))
+	{
+		token = req.headers.authorization.split(' ')[1];
+	}
+	else if (req.cookies?.jwt)
+	{
+		token = req.cookies.jwt;
+	}
+	
+	if (!token)
+	{
+		return res.status(401).json({ status: 401, message: "Not authorized, no token provide" });
+	}
+	
+	try
+	{
+		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		
+		const user = await prisma.user.findUnique({
+			where: { id: decoded.id }
+		});
+		
+		if (!user)
+		{
+			return res.status(401).json({ error: 'User no longer exists' });
+		}
+		
+		req.user = user;
+		next();
+	}
+	catch (err)
+	{
+		return res.status(401).json({ err: 'Not authorized, token failed' });
+	}
+}
+
+export { authMiddleware };

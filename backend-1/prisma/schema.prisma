@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  movies         Movie[]         @relation("MovieCreator")
+  watchlistItems WatchlistItem[]
+}
+
+model Movie {
+  id          String   @id @default(uuid())
+  title       String
+  overview    String?  @db.Text // @db.Text permet de stocker de longs textes (synopsis)
+  releaseYear Int
+  runtime     Int?
+  posterUrl   String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  creator        User            @relation("MovieCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  watchlistItems WatchlistItem[]
+  
+  // Relation plusieurs-à-plusieurs avec les genres
+  genres         Genre[]         
+}
+
+model Genre {
+  id     String  @id @default(uuid())
+  name   String  @unique // Ex: "Action", "Horreur", "Comédie"
+  
+  // Relation inverse
+  movies Movie[]
+}
+
+model WatchlistItem {
+  id        String          @id @default(uuid())
+  userId    String
+  movieId   String
+  status    WatchlistStatus @default(PLANNED)
+  rating    Int?
+  notes     String?         @db.VarChar(500)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt // Met à jour la date automatiquement à chaque modif
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId]) // Empêche d'ajouter deux fois le même film à sa liste
+}
+
+enum WatchlistStatus {
+  PLANNED
+  WATCHING
+  COMPLETED
+  DROPPED
+}
