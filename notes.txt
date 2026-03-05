@@ -1,0 +1,132 @@
+docker run --name mongo -v db-data:/data/db -p 27017:27017 -d mongo:latest
+
+docker run --name database \
+  -v mysql_data:/var/lib/mysql \
+  -e MYSQL_ROOT_PASSWORD=rootpassword \
+  -e MYSQL_DATABASE=database \
+  -e MYSQL_USER=appuser \
+  -e MYSQL_PASSWORD=userpassword \
+  -p 3306:3306 \
+  -d mysql:latest
+
+  
+  
+npm install prisma --save-dev
+npm install @prisma/client @prisma/adapter-mariadb
+
+npx prisma init --datasource-provider mysql
+
+
+DATABASE_URL="mysql://root:rootpassword@localhost:3306/database"
+
+NODE_ENV="development"
+
+npx prisma migrate dev --name init
+npx prisma generate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  movies         Movie[]         @relation("MovieCreator")
+  watchlistItems WatchlistItem[]
+}
+
+model Movie {
+  id          String   @id @default(uuid())
+  title       String
+  overview    String?  @db.Text // @db.Text permet de stocker de longs textes (synopsis)
+  releaseYear Int
+  runtime     Int?
+  posterUrl   String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  creator        User            @relation("MovieCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  watchlistItems WatchlistItem[]
+  
+  // Relation plusieurs-à-plusieurs avec les genres
+  genres         Genre[]         
+}
+
+model Genre {
+  id     String  @id @default(uuid())
+  name   String  @unique // Ex: "Action", "Horreur", "Comédie"
+  
+  // Relation inverse
+  movies Movie[]
+}
+
+model WatchlistItem {
+  id        String          @id @default(uuid())
+  userId    String
+  movieId   String
+  status    WatchlistStatus @default(PLANNED)
+  rating    Int?
+  notes     String?         @db.VarChar(500)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt // Met à jour la date automatiquement à chaque modif
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId]) // Empêche d'ajouter deux fois le même film à sa liste
+}
+
+enum WatchlistStatus {
+  PLANNED
+  WATCHING
+  COMPLETED
+  DROPPED
+}
+
+
+
+
+
+
+
+
+
+https://chatgpt.com/share/69a66615-3cb8-8012-8f87-23f3069ba9f9
+
+Peut tu adapter notre projet a cette requis et me fournir le projet complet modifie dans un format ZIP ? Je reitere les fonctionnalites :
+ ◦ Users can update their profile information. ◦ Users can upload an avatar (with a default avatar if none provided). ◦ Users can add other users as friends and see their online status. ◦ Users have a profile page displaying their information.
+ 
+ https://chatgpt.com/share/69a654d9-7ccc-8007-bf71-0eafd8d3a953
+ 
+ https://chatgpt.com/share/69a654d9-7ccc-8007-bf71-0eafd8d3a953
+ 
+ 
+ Peut tu m'aider comment utiliser ses routes a partir de l'authentification pour le jeux avec API Key et JWT avec requetes et reponse detaile ?
+https://chatgpt.com/share/69a68c81-6358-8004-8e7b-0b459f68845e
+
+
+
